@@ -13,6 +13,8 @@ import { PriceChart } from '@/components/charts/price-chart';
 import { formatUsd, formatPercent, formatPrice, formatAge, formatNumber, shortenAddress, copyToClipboard } from '@/lib/utils/format';
 import { calculateSafetyScore } from '@/lib/utils/safety';
 import { calculateRunPotential } from '@/lib/utils/run-potential';
+import { useSocialSentiment } from '@/lib/hooks/useSocialSentiment';
+import { SocialSentimentCard } from '@/components/social/social-sentiment-card';
 import {
   ArrowLeft,
   Copy,
@@ -33,7 +35,9 @@ import {
   Rocket,
   Flame,
   Coins,
+  Activity,
 } from 'lucide-react';
+import { getSentimentLabel } from '@/lib/utils/social-sentiment';
 import { cn } from '@/lib/utils';
 
 export default function TokenDetailPage() {
@@ -50,6 +54,9 @@ export default function TokenDetailPage() {
     if (!token) return null;
     return calculateRunPotential(token);
   }, [token]);
+
+  // Social sentiment with Reddit integration
+  const { data: socialSentiment, isLoading: socialLoading } = useSocialSentiment(token, true);
 
   const PHASE_CONFIG = {
     'accumulation': { label: 'Accumulating', icon: Coins, color: 'text-blue-400', description: 'Volume building with stable price - smart money may be loading' },
@@ -110,6 +117,15 @@ export default function TokenDetailPage() {
                 >
                   <Rocket className="h-4 w-4" />
                   {runPotential.grade} ({runPotential.score})
+                </Badge>
+              )}
+              {socialSentiment && (
+                <Badge
+                  variant="secondary"
+                  className={cn('text-sm gap-1', socialSentiment.color)}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  {socialSentiment.overallScore}
                 </Badge>
               )}
               {safety && (
@@ -296,6 +312,13 @@ export default function TokenDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Social Sentiment Card */}
+      <SocialSentimentCard
+        sentiment={socialSentiment}
+        isLoading={socialLoading}
+        showReddit={true}
+      />
 
       {/* Safety Score Card */}
       {safety && (

@@ -10,10 +10,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { TrendingUp, TrendingDown, Droplets, BarChart3, Users, Clock, ExternalLink, Shield, AlertTriangle, Rocket, Flame, ArrowDown, Coins } from 'lucide-react';
+import { TrendingUp, TrendingDown, Droplets, BarChart3, Users, Clock, ExternalLink, Shield, AlertTriangle, Rocket, Flame, ArrowDown, Coins, MessageCircle } from 'lucide-react';
 import { formatUsd, formatPercent, formatPrice, formatAge, formatNumber } from '@/lib/utils/format';
 import { calculateSafetyScore } from '@/lib/utils/safety';
 import { calculateRunPotential } from '@/lib/utils/run-potential';
+import { calculateSocialMetrics } from '@/lib/utils/social-sentiment';
+import { SocialSentimentBadge } from '@/components/social/social-sentiment-badge';
 import type { TokenPair } from '@/types/token';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -37,6 +39,7 @@ export function TokenCard({ token }: TokenCardProps) {
 
   const safety = useMemo(() => calculateSafetyScore(token), [token]);
   const runPotential = useMemo(() => calculateRunPotential(token), [token]);
+  const socialMetrics = useMemo(() => calculateSocialMetrics(token), [token]);
   const phaseConfig = PHASE_CONFIG[runPotential.phase];
 
   return (
@@ -103,6 +106,8 @@ export function TokenCard({ token }: TokenCardProps) {
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
+                  {/* Social Sentiment Badge */}
+                  <SocialSentimentBadge metrics={socialMetrics} />
                   {/* Safety Badge */}
                   <TooltipProvider>
                     <Tooltip>
