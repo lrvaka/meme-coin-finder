@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { searchTokens, getTrendingTokens, getTokenByAddress, getTokenPairs } from '@/lib/api/dexscreener';
+import { searchTokens, getTrendingTokens, getLatestTokens, getTokenByAddress, getTokenPairs } from '@/lib/api/dexscreener';
 import { calculateSafetyScore } from '@/lib/utils/safety';
 import { calculateRunPotential } from '@/lib/utils/run-potential';
 import type { TokenPair, TokenFilter } from '@/types/token';
@@ -19,6 +19,15 @@ export function useTrendingTokens() {
   return useQuery({
     queryKey: ['tokens', 'trending'],
     queryFn: getTrendingTokens,
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+  });
+}
+
+export function useLatestTokens() {
+  return useQuery({
+    queryKey: ['tokens', 'latest'],
+    queryFn: getLatestTokens,
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
   });

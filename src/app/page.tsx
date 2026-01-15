@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TokenGrid } from '@/components/token/token-grid';
 import { Filters } from '@/components/dashboard/filters';
-import { useSearchTokens, useTrendingTokens, filterTokens, sortTokens } from '@/lib/hooks/useTokens';
+import { useSearchTokens, useTrendingTokens, useLatestTokens, filterTokens, sortTokens } from '@/lib/hooks/useTokens';
 import type { TokenFilter } from '@/types/token';
 import { TrendingUp, Sparkles, Search } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,16 +20,26 @@ function HomeContent() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const { data: trendingTokens, isLoading: trendingLoading } = useTrendingTokens();
+  const { data: latestTokens, isLoading: latestLoading } = useLatestTokens();
   const { data: searchResults, isLoading: searchLoading } = useSearchTokens(searchQuery);
 
   const tokens = useMemo(() => {
-    let tokenList = activeTab === 'search' && searchQuery ? searchResults || [] : trendingTokens || [];
+    let tokenList: typeof trendingTokens = [];
+
+    if (activeTab === 'search' && searchQuery) {
+      tokenList = searchResults || [];
+    } else if (activeTab === 'new') {
+      tokenList = latestTokens || [];
+    } else {
+      tokenList = trendingTokens || [];
+    }
+
     tokenList = filterTokens(tokenList, filter);
     tokenList = sortTokens(tokenList, sortBy as 'volume' | 'liquidity' | 'priceChange' | 'marketCap' | 'age' | 'safety' | 'runPotential', sortDirection);
     return tokenList;
-  }, [activeTab, searchQuery, searchResults, trendingTokens, filter, sortBy, sortDirection]);
+  }, [activeTab, searchQuery, searchResults, trendingTokens, latestTokens, filter, sortBy, sortDirection]);
 
-  const isLoading = activeTab === 'search' ? searchLoading : trendingLoading;
+  const isLoading = activeTab === 'search' ? searchLoading : activeTab === 'new' ? latestLoading : trendingLoading;
 
   return (
     <div className="space-y-6">
