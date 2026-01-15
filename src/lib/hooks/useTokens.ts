@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { searchTokens, getTrendingTokens, getTokenByAddress, getTokenPairs } from '@/lib/api/dexscreener';
 import { calculateSafetyScore } from '@/lib/utils/safety';
+import { calculateRunPotential } from '@/lib/utils/run-potential';
 import type { TokenPair, TokenFilter } from '@/types/token';
 
 export function useSearchTokens(query: string) {
@@ -67,7 +68,7 @@ export function filterTokens(tokens: TokenPair[], filter: TokenFilter): TokenPai
 
 export function sortTokens(
   tokens: TokenPair[],
-  sortBy: 'volume' | 'liquidity' | 'priceChange' | 'marketCap' | 'age' | 'safety',
+  sortBy: 'volume' | 'liquidity' | 'priceChange' | 'marketCap' | 'age' | 'safety' | 'runPotential',
   direction: 'asc' | 'desc' = 'desc'
 ): TokenPair[] {
   const sorted = [...tokens].sort((a, b) => {
@@ -98,6 +99,10 @@ export function sortTokens(
       case 'safety':
         aValue = calculateSafetyScore(a).score;
         bValue = calculateSafetyScore(b).score;
+        break;
+      case 'runPotential':
+        aValue = calculateRunPotential(a).score;
+        bValue = calculateRunPotential(b).score;
         break;
       default:
         return 0;

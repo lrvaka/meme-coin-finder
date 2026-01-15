@@ -10,9 +10,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { TrendingUp, TrendingDown, Droplets, BarChart3, Users, Clock, ExternalLink, Shield, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Droplets, BarChart3, Users, Clock, ExternalLink, Shield, AlertTriangle, Rocket, Flame, ArrowDown, Coins } from 'lucide-react';
 import { formatUsd, formatPercent, formatPrice, formatAge, formatNumber } from '@/lib/utils/format';
 import { calculateSafetyScore } from '@/lib/utils/safety';
+import { calculateRunPotential } from '@/lib/utils/run-potential';
 import type { TokenPair } from '@/types/token';
 import { cn } from '@/lib/utils';
 import { useMemo } from 'react';
@@ -21,11 +22,22 @@ interface TokenCardProps {
   token: TokenPair;
 }
 
+const PHASE_CONFIG = {
+  'accumulation': { label: 'Accumulating', icon: Coins, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  'early-momentum': { label: 'Early Momentum', icon: TrendingUp, color: 'text-lime-400', bg: 'bg-lime-500/10' },
+  'breakout': { label: 'Breaking Out', icon: Flame, color: 'text-orange-400', bg: 'bg-orange-500/10' },
+  'already-ran': { label: 'Already Ran', icon: ArrowDown, color: 'text-red-400', bg: 'bg-red-500/10' },
+  'declining': { label: 'Declining', icon: TrendingDown, color: 'text-red-400', bg: 'bg-red-500/10' },
+  'unknown': { label: 'Unknown', icon: BarChart3, color: 'text-gray-400', bg: 'bg-gray-500/10' },
+};
+
 export function TokenCard({ token }: TokenCardProps) {
   const priceChange24h = token.priceChange?.h24 || 0;
   const isPositive = priceChange24h >= 0;
 
   const safety = useMemo(() => calculateSafetyScore(token), [token]);
+  const runPotential = useMemo(() => calculateRunPotential(token), [token]);
+  const phaseConfig = PHASE_CONFIG[runPotential.phase];
 
   return (
     <Link href={`/token/${token.baseToken.address}`}>
@@ -41,15 +53,65 @@ export function TokenCard({ token }: TokenCardProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-semibold truncate">{token.baseToken.symbol}</h3>
+                  {/* Run Potential Badge */}
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Badge
-                          variant={safety.grade === 'F' ? 'destructive' : 'secondary'}
-                          className={cn('text-xs font-bold', safety.color)}
+                          variant="secondary"
+                          className={cn('text-xs font-bold gap-1', runPotential.color, phaseConfig.bg)}
                         >
+                          <Rocket className="h-3 w-3" />
+                          {runPotential.grade}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <div className="space-y-2">
+                          <div className="font-semibold flex items-center gap-2">
+                            <phaseConfig.icon className={cn('h-4 w-4', phaseConfig.color)} />
+                            {phaseConfig.label} ({runPotential.score}/100)
+                          </div>
+                          {runPotential.signals.length > 0 && (
+                            <div>
+                              <div className="text-green-400 text-xs font-medium mb-1">Bullish Signals:</div>
+                              <ul className="text-xs space-y-0.5">
+                                {runPotential.signals.slice(0, 3).map((signal, i) => (
+                                  <li key={i} className="flex items-start gap-1">
+                                    <TrendingUp className="h-3 w-3 shrink-0 mt-0.5 text-green-400" />
+                                    {signal}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {runPotential.warnings.length > 0 && (
+                            <div>
+                              <div className="text-red-400 text-xs font-medium mb-1">Warnings:</div>
+                              <ul className="text-xs space-y-0.5">
+                                {runPotential.warnings.slice(0, 3).map((warning, i) => (
+                                  <li key={i} className="flex items-start gap-1">
+                                    <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-red-400" />
+                                    {warning}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  {/* Safety Badge */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant={safety.grade === 'F' ? 'destructive' : 'outline'}
+                          className={cn('text-xs', safety.color)}
+                        >
+                          <Shield className="h-3 w-3 mr-1" />
                           {safety.grade}
                         </Badge>
                       </TooltipTrigger>
@@ -151,7 +213,7 @@ export function TokenCard({ token }: TokenCardProps) {
             </div>
           </div>
 
-          {/* Txns & Safety */}
+          {/* Txns & Phase */}
           <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
             <div className="flex gap-4">
               <span className="text-green-500">
@@ -162,9 +224,9 @@ export function TokenCard({ token }: TokenCardProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className={cn('flex items-center gap-1', safety.color)}>
-                <Shield className="h-3 w-3" />
-                <span>{safety.score}</span>
+              <div className={cn('flex items-center gap-1', phaseConfig.color)}>
+                <phaseConfig.icon className="h-3 w-3" />
+                <span>{phaseConfig.label}</span>
               </div>
               <span className="text-muted-foreground">|</span>
               <div className="flex items-center gap-1">

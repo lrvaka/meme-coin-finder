@@ -16,7 +16,7 @@ function HomeContent() {
 
   const [activeTab, setActiveTab] = useState<string>(searchQuery ? 'search' : 'trending');
   const [filter, setFilter] = useState<TokenFilter>({});
-  const [sortBy, setSortBy] = useState<string>('volume');
+  const [sortBy, setSortBy] = useState<string>('runPotential');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const { data: trendingTokens, isLoading: trendingLoading } = useTrendingTokens();
@@ -25,7 +25,7 @@ function HomeContent() {
   const tokens = useMemo(() => {
     let tokenList = activeTab === 'search' && searchQuery ? searchResults || [] : trendingTokens || [];
     tokenList = filterTokens(tokenList, filter);
-    tokenList = sortTokens(tokenList, sortBy as 'volume' | 'liquidity' | 'priceChange' | 'marketCap' | 'age' | 'safety', sortDirection);
+    tokenList = sortTokens(tokenList, sortBy as 'volume' | 'liquidity' | 'priceChange' | 'marketCap' | 'age' | 'safety' | 'runPotential', sortDirection);
     return tokenList;
   }, [activeTab, searchQuery, searchResults, trendingTokens, filter, sortBy, sortDirection]);
 

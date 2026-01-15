@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Filter, SortAsc, SortDesc, Zap, Shield, TrendingUp, Clock } from 'lucide-react';
+import { Filter, SortAsc, SortDesc, Zap, Shield, TrendingUp, Clock, Rocket } from 'lucide-react';
 import type { TokenFilter } from '@/types/token';
 
 interface FiltersProps {
@@ -27,6 +27,12 @@ const PRESETS = [
     name: 'All',
     icon: Filter,
     filter: {},
+  },
+  {
+    name: 'Primed',
+    icon: Rocket,
+    description: 'Ready to run - accumulation phase',
+    filter: { minLiquidity: 10000, minMarketCap: 100000, maxMarketCap: 20000000 },
   },
   {
     name: 'Degen',
@@ -82,6 +88,7 @@ const VOLUME_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
+  { value: 'runPotential', label: 'Run Potential 🚀' },
   { value: 'volume', label: 'Volume 24h' },
   { value: 'liquidity', label: 'Liquidity' },
   { value: 'priceChange', label: 'Price Change' },

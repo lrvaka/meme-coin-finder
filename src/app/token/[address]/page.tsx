@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PriceChart } from '@/components/charts/price-chart';
 import { formatUsd, formatPercent, formatPrice, formatAge, formatNumber, shortenAddress, copyToClipboard } from '@/lib/utils/format';
 import { calculateSafetyScore } from '@/lib/utils/safety';
+import { calculateRunPotential } from '@/lib/utils/run-potential';
 import {
   ArrowLeft,
   Copy,
@@ -29,6 +30,9 @@ import {
   Shield,
   AlertTriangle,
   CheckCircle,
+  Rocket,
+  Flame,
+  Coins,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -41,6 +45,20 @@ export default function TokenDetailPage() {
     if (!token) return null;
     return calculateSafetyScore(token);
   }, [token]);
+
+  const runPotential = useMemo(() => {
+    if (!token) return null;
+    return calculateRunPotential(token);
+  }, [token]);
+
+  const PHASE_CONFIG = {
+    'accumulation': { label: 'Accumulating', icon: Coins, color: 'text-blue-400', description: 'Volume building with stable price - smart money may be loading' },
+    'early-momentum': { label: 'Early Momentum', icon: TrendingUp, color: 'text-lime-400', description: 'Starting to move up with healthy buy pressure' },
+    'breakout': { label: 'Breaking Out', icon: Flame, color: 'text-orange-400', description: 'Active breakout in progress - high volatility' },
+    'already-ran': { label: 'Already Ran', icon: TrendingDown, color: 'text-red-400', description: 'Major gains already realized - higher risk entry' },
+    'declining': { label: 'Declining', icon: TrendingDown, color: 'text-red-400', description: 'Price dropping after pump - distribution phase' },
+    'unknown': { label: 'Unknown', icon: BarChart3, color: 'text-gray-400', description: 'Insufficient data to determine phase' },
+  };
 
   if (isLoading) {
     return <TokenDetailSkeleton />;
@@ -83,14 +101,24 @@ export default function TokenDetailPage() {
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-3xl font-bold">{token.baseToken.symbol}</h1>
+              {runPotential && (
+                <Badge
+                  variant="secondary"
+                  className={cn('text-sm font-bold gap-1', runPotential.color)}
+                >
+                  <Rocket className="h-4 w-4" />
+                  {runPotential.grade} ({runPotential.score})
+                </Badge>
+              )}
               {safety && (
                 <Badge
-                  variant={safety.grade === 'F' ? 'destructive' : 'secondary'}
-                  className={cn('text-sm font-bold', safety.color)}
+                  variant={safety.grade === 'F' ? 'destructive' : 'outline'}
+                  className={cn('text-sm', safety.color)}
                 >
-                  {safety.grade} ({safety.score})
+                  <Shield className="h-4 w-4 mr-1" />
+                  {safety.grade}
                 </Badge>
               )}
               {token.boosts?.active && token.boosts.active > 0 && (
@@ -174,6 +202,99 @@ export default function TokenDetailPage() {
             );
           })}
         </div>
+      )}
+
+      {/* Run Potential Card */}
+      {runPotential && (
+        <Card className={cn(
+          'border-2',
+          runPotential.grade === 'A' ? 'border-green-500/50' :
+          runPotential.grade === 'B' ? 'border-lime-500/50' :
+          runPotential.grade === 'C' ? 'border-yellow-500/50' :
+          runPotential.grade === 'D' ? 'border-orange-500/50' :
+          'border-red-500/50'
+        )}>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Rocket className={cn('h-5 w-5', runPotential.color)} />
+              Run Potential Analysis
+              <Badge variant="outline" className={cn('ml-2', runPotential.color)}>
+                Grade {runPotential.grade} - {runPotential.score}/100
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Phase Indicator */}
+            <div className={cn(
+              'flex items-center gap-3 p-4 rounded-lg mb-6',
+              PHASE_CONFIG[runPotential.phase].color === 'text-blue-400' ? 'bg-blue-500/10' :
+              PHASE_CONFIG[runPotential.phase].color === 'text-lime-400' ? 'bg-lime-500/10' :
+              PHASE_CONFIG[runPotential.phase].color === 'text-orange-400' ? 'bg-orange-500/10' :
+              PHASE_CONFIG[runPotential.phase].color === 'text-red-400' ? 'bg-red-500/10' :
+              'bg-gray-500/10'
+            )}>
+              {(() => {
+                const PhaseIcon = PHASE_CONFIG[runPotential.phase].icon;
+                return <PhaseIcon className={cn('h-8 w-8', PHASE_CONFIG[runPotential.phase].color)} />;
+              })()}
+              <div>
+                <p className={cn('text-lg font-bold', PHASE_CONFIG[runPotential.phase].color)}>
+                  {PHASE_CONFIG[runPotential.phase].label}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {PHASE_CONFIG[runPotential.phase].description}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Bullish Signals */}
+              <div>
+                <h4 className="font-semibold text-green-400 mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  Bullish Signals ({runPotential.signals.length})
+                </h4>
+                {runPotential.signals.length > 0 ? (
+                  <ul className="space-y-2">
+                    {runPotential.signals.map((signal, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-400 shrink-0 mt-0.5" />
+                        <span>{signal}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No bullish signals detected</p>
+                )}
+              </div>
+
+              {/* Warnings */}
+              <div>
+                <h4 className="font-semibold text-red-400 mb-3 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Warnings ({runPotential.warnings.length})
+                </h4>
+                {runPotential.warnings.length > 0 ? (
+                  <ul className="space-y-2">
+                    {runPotential.warnings.map((warning, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                        <span>{warning}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No warnings</p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t text-xs text-muted-foreground">
+              Run potential identifies tokens in accumulation or early momentum phases that haven&apos;t yet had their major price run.
+              This is not financial advice - always DYOR.
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Safety Score Card */}
