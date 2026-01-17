@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Wallet, TrendingUp, Zap } from 'lucide-react';
+import { Search, Wallet, TrendingUp, Zap, Brain } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 const navItems = [
   { href: '/', label: 'Discover', icon: TrendingUp },
   { href: '/wallets', label: 'Smart Money', icon: Wallet },
+  { href: '/predictions', label: 'Predictions', icon: Brain },
 ];
 
 export function Header() {

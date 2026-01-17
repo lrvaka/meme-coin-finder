@@ -14,6 +14,7 @@ import { formatUsd, formatPercent, formatPrice, formatAge, formatNumber, shorten
 import { calculateSafetyScore } from '@/lib/utils/safety';
 import { calculateRunPotential } from '@/lib/utils/run-potential';
 import { useSocialSentiment } from '@/lib/hooks/useSocialSentiment';
+import { useTrackToken } from '@/lib/hooks/usePredictions';
 import { SocialSentimentCard } from '@/components/social/social-sentiment-card';
 import {
   ArrowLeft,
@@ -57,6 +58,17 @@ export default function TokenDetailPage() {
 
   // Social sentiment with Reddit integration
   const { data: socialSentiment, isLoading: socialLoading } = useSocialSentiment(token, true);
+
+  // Auto-track high-potential tokens
+  useTrackToken(
+    token,
+    runPotential?.score || 0,
+    runPotential?.grade || 'F',
+    runPotential?.phase || 'unknown',
+    runPotential?.signals || [],
+    safety?.score || 0,
+    socialSentiment?.overallScore || 0
+  );
 
   const PHASE_CONFIG = {
     'accumulation': { label: 'Accumulating', icon: Coins, color: 'text-blue-400', description: 'Volume building with stable price - smart money may be loading' },
